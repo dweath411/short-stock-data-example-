@@ -1,0 +1,89 @@
+---
+title: "stock data testing"
+author: "Derien Weatherspoon"
+date: "2023-07-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Packages
+
+```{r packages}
+library(quantmod)
+library(ggplot2)
+library(BatchGetSymbols)
+```
+
+```{r load tickers}
+tickers <- c('JXN', 'LNC', 'VOYA') # assign ticker symbols
+getSymbols(tickers , src='yahoo') # pull from yahoo, openly available
+```
+
+```{r summary of jxn}
+summary(`JXN`) # peek at JXN to see if read in correctly
+```
+
+```{r convert to ts}
+JXN <- as.xts(`JXN`) # make it a time series variation to use the dates
+names(JXN) <- c("JXN.Open","JXN.High","JXN.Low","JXN.Close","JXN.Volume", "JXN.Adjusted") # set vector of names
+names(JXN)
+```
+
+## Plotting a lot of stock data
+
+```{r basic plot}
+plot(JXN$JXN.Open) # basic plotting of JXN.Open
+lineChart(JXN$JXN.Open, line.type = 'h', theme = 'black', TA = NULL)
+```
+
+```{r volume basic plot}
+lineChart(JXN, line.type = 'h', theme = 'black') # showing volume
+```
+
+```{r bar and candle}
+barChart(JXN, bar.type = 'hlc', TA = NULL) # barchart to see highs and lows for close
+
+candleChart(JXN, TA = NULL, subset = '2023') # candle sticks, subset range from 2021 to 2023
+```
+
+```{r moving average}
+candleChart(JXN, TA=c(addMACD(),addVo()), subset = '2023') # showing moving average 
+```
+
+```{r big plot}
+chartSeries(JXN, 
+            type = c("auto", "matchsticks"), 
+            subset = '2023-01::',
+            show.grid = TRUE,
+            major.ticks='auto', minor.ticks=TRUE,
+            multi.col = FALSE,
+            TA=c(addMACD(),addVo(),addSMA(n=200,col = 'blue'),addSMA(n=50,col = 'red'),addSMA(n=22,col = 'green'),
+            addROC(n=200,col = 'blue'),addROC(n=50,col = 'red'),addROC(n=22,col = 'green'))) # rate of change, volume, moving average.
+```
+
+```{r ggplot}
+ggplot(JXN, aes(x = index(JXN), y = JXN[,6])) + geom_line(color = "darkred") + ggtitle("JXN Price Plot") + xlab("Date") + ylab("Price") + theme(plot.title = element_text(hjust = 0.5)) + scale_x_date(date_labels = "%b %y" , date_breaks = "4 months") # scale_x_date to change label on dates and data breaks
+```
+
+```{r statistics on jxn}
+jxn_rot <- diff(log(JXN[,6]))
+jxn_rot <- jxn_rot[-1,]
+Op(JXN)
+Cl(JXN)
+Ad(JXN)
+```
+```{r}
+dailyReturn(JXN)
+weeklyReturn(JXN) # calculating returns by day, week, etc.
+monthlyReturn(JXN)
+quarterlyReturn(JXN)
+yearlyReturn(JXN)
+```
+
+```{r}
+sd(jxn_rot)
+```
+
